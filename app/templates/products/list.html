@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Content Row -->
+<div class="row">
+    <div class="col-xl-12 mb-4">
+        <button class="btn btn-primary float-right" data-toggle="modal" data-target="#productModal">
+            New Product
+        </button>
+    </div>
+    <div class="col-xl-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    {{ title }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th width="200">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.category[0].name }}</td>
+                            <td>{{ item.price }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning update-product"
+                                        data-id="{{ item._id }}"
+                                        data-name="{{ item.name }}"
+                                        data-category="{{ item.category_id }}"
+                                        data-price="{{ item.price }}"
+                                >
+                                    Update
+                                </button>
+                                <button class="btn btn-sm btn-danger ml-2 delete-product" data-id="{{ item._id }}">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New product Modal-->
+<div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">New Product</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('new_product') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select class="form-control" name="category_id">
+                            {% for category in categories %}
+                            <option value="{{ category._id['$oid'] }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input class="form-control" name="name" placeholder="Enter Product Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input class="form-control price_formatter" name="price" placeholder="00.00">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update product Modal-->
+<div class="modal fade" id="updateProductModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Product</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="updateProductForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select class="form-control" id="category_id" name="category_id">
+                            {% for category in categories %}
+                            <option value="{{ category._id['$oid'] }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input class="form-control" id="name" name="name" placeholder="Enter Product Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input class="form-control price_formatter" id="price" name="price" placeholder="00.00">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete product Modal-->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Product</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="deleteProductForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="modal-body">
+                    Do you want delete this product?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $('.price_formatter').on("keyup blur change", function () {
+        var obj = $(this);
+        var val = obj.val();
+        obj.val(val.replace(/[A-Za-z!@#$%^&*(),_='"{}?<> /\\]/g, '').replace('-', ''));
+
+        var maxCount = $(this).attr('maxlength');
+        if(val.length>maxCount){
+            obj.val(val.substring(0,maxCount));
+        }
+    });
+
+    $(document).ready(function() {
+      $('#dataTable').DataTable({
+          responsive: true,
+          lengthMenu: [25, 50, 100, 200],
+          pageLength: 50,
+          paging: true,
+          searching: true,
+          ordering: true,
+          autoWidth: false,
+      });
+    });
+
+    $(".update-product").click(function () {
+        var form = $("#updateProductForm")
+        var _id = $(this).attr('data-id')
+        var name = $(this).attr('data-name')
+        var category = $(this).attr('data-category')
+        var price = $(this).attr('data-price')
+
+        form.attr('action', "/products/edit/" + _id)
+        console.log(category)
+        $('#category_id').val(category).change()
+        $('#name').val(name)
+        $('#price').val(price)
+
+        $("#updateProductModal").modal('show');
+    })
+
+    $(".delete-product").click(function () {
+        var form = $("#deleteProductForm")
+        var _id = $(this).attr('data-id')
+
+        form.attr('action', "/products/delete/" + _id)
+
+        $("#deleteProductModal").modal('show');
+    })
+</script>
+{% endblock %}
